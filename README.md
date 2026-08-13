@@ -305,3 +305,6 @@ PASS=True
 **Buy rsyncbolt Unlimited:**
 
 https://buy.stripe.com/00w14g9KP3bV8rEgblgUM07
+
+# also see
+https://github.com/yangofzeal/hkd_fs
