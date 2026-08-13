@@ -1,5 +1,7 @@
 # rsyncbolt
 
+30x speedup over standard rsync.
+
 Move the change, not the file - exact sparse synchronization that can eliminate nearly all of the work of incremental file updates.
 
 Measured: 1,397.95× faster transfer path than rsync -a on Linux
