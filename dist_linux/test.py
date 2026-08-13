@@ -203,46 +203,39 @@ exec /bin/sh -c "$*"
     print("FULL_FILE_EXACT=%s" % exact)
     print("REMOTE_TEST_PASS=%s" % remote_ok)
 
-    # Always follow correctness with a native-rsync speed benchmark.
-    # Keep the workload inside the Free limit for the Free edition.
+    # Compare the exact tracked path with native rsync.
     bench_size_mib = 1
     required_speedup = 0.0
-    print("")
-    print("============================================================")
-    print("RSYNCBOLT SPEEDUP BENCHMARK")
-    print("native baseline : rsync -a SRC DST")
-    print("workload        : %d MiB file, 64 KiB exact tracked change" % bench_size_mib)
-    print("============================================================")
     bp = run_process(
         cmd + ["--hkd-benchmark", "--size-mib", str(bench_size_mib),
                "--versions", "2", "--dirty-kib", "64"],
         env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
     )
-    sys.stdout.write(bp.stdout or "")
-    sys.stderr.write(bp.stderr or "")
+    if bp.returncode != 0:
+        sys.stdout.write(bp.stdout or "")
+        sys.stderr.write(bp.stderr or "")
+        raise SystemExit(bp.returncode)
 
     speedup = 0.0
     benchmark_exact = False
+    rsync_s = 0.0
+    bolt_s = 0.0
     for line in (bp.stdout or "").splitlines():
         if line.startswith("rsyncbolt_transfer_speedup_x="):
-            try:
-                speedup = float(line.split("=", 1)[1])
-            except Exception:
-                speedup = 0.0
+            speedup = float(line.split("=", 1)[1])
+        elif line.startswith("rsync_elapsed_s="):
+            rsync_s = float(line.split("=", 1)[1].split()[0])
+        elif line.startswith("rsyncbolt_transfer_elapsed_s="):
+            bolt_s = float(line.split("=", 1)[1].split()[0])
         elif line == "PASS=True":
             benchmark_exact = True
 
-    speed_ok = benchmark_exact and bp.returncode == 0
-    if required_speedup > 0.0:
-        speed_ok = speed_ok and speedup >= required_speedup
-
-    print("============================================================")
-    print("MEASURED_RSYNCBOLT_SPEEDUP_X=%.2f" % speedup)
-    if required_speedup > 0.0:
-        print("REQUIRED_SPEEDUP_X=%.2f" % required_speedup)
-        print("THIRTY_X_TARGET_MET=%s" % (speedup >= required_speedup))
-    print("BENCHMARK_EXACT=%s" % benchmark_exact)
-    print("BENCHMARK_PASS=%s" % speed_ok)
-    print("OVERALL_PASS=%s" % (remote_ok and speed_ok))
-    print("============================================================")
+    speed_ok = benchmark_exact and speedup >= required_speedup
+    print("")
+    print("RSYNC      %.6f s" % rsync_s)
+    print("RSYNCBOLT  %.6f s" % bolt_s)
+    print("SPEEDUP    %.2fx" % speedup)
+    print("30X_PLUS   %s" % ("YES" if speedup >= 30.0 else "NO"))
+    print("EXACT      %s" % ("YES" if benchmark_exact else "NO"))
+    print("PASS       %s" % ("YES" if (remote_ok and speed_ok) else "NO"))
     raise SystemExit(0 if (remote_ok and speed_ok) else 1)

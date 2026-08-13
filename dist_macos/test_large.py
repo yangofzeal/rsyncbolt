@@ -154,10 +154,10 @@ exec /bin/sh -c "$*"
         sys.stdout.write(p.stdout or "")
         sys.stderr.write(p.stderr or "")
         ok = p.returncode == 2 and "FREE_LIMIT_TRIGGERED=True" in p.stdout
-        print("EXECUTION_MODE=%s" % mode)
-        print("PATH_SIBLING=%s" % sibname)
-        print("FREE_LARGE_BLOCKED=%s" % ok)
-        print("PASS=%s" % ok)
+        print("FREE LIMIT  %s" % ("BLOCKED" if ok else "FAILED"))
+        print("LIMIT       1 MiB")
+        print("TEST FILE   2 MiB")
+        print("PASS        %s" % ("YES" if ok else "NO"))
         raise SystemExit(0 if ok else 1)
 
     # Initial remote baseline.
