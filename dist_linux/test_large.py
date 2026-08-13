@@ -92,20 +92,22 @@ with tempfile.TemporaryDirectory(prefix="rsyncbolt4_onefile_") as t:
     real = os.path.join(HERE, sibname)
     if os.path.exists(real) and os.access(real, os.X_OK):
         shutil.copy2(real, os.path.join(bindir, sibname))
+    elif mode == "compiled" and platform.system() in ("Linux", "Darwin"):
+        # The fake remote has the same OS as this test process. A compiled
+        # rsyncbolt executable is therefore the correct same-platform helper.
+        # This also makes a minimal dist directory self-testing without an
+        # accidentally stale rsyncbolt_mac/rsyncbolt_linux from PATH.
+        shutil.copy2(cmd[0], os.path.join(bindir, sibname))
     else:
-        found = shutil.which(sibname)
-        if found:
-            shutil.copy2(found, os.path.join(bindir, sibname))
-        else:
-            src = os.path.join(HERE, "rsyncbolt.py")
-            if not os.path.exists(src):
-                raise RuntimeError("compiled test needs %s either beside test.py or on PATH" % sibname)
-            text = open(src, "r").read().replace(
-                "#!/usr/bin/env python3",
-                "#!/usr/bin/env -S python3 -S",
-                1,
-            )
-            open(os.path.join(bindir, sibname), "w").write(text)
+        src = os.path.join(HERE, "rsyncbolt.py")
+        if not os.path.exists(src):
+            raise RuntimeError("test needs %s beside test.py or rsyncbolt.py source" % sibname)
+        text = open(src, "r").read().replace(
+            "#!/usr/bin/env python3",
+            "#!/usr/bin/env -S python3 -S",
+            1,
+        )
+        open(os.path.join(bindir, sibname), "w").write(text)
     os.chmod(os.path.join(bindir, sibname), 0o755)
 
     # Fake SSH process boundary. This exercises the actual remote server/bootstrap path.
