@@ -313,3 +313,31 @@ https://buy.stripe.com/00w14g9KP3bV8rEgblgUM07
 
 # also see
 https://github.com/yangofzeal/hkd_fs
+
+SSH Identity File (-e "ssh -i ...")
+
+rsyncbolt accepts the same SSH transport option used by rsync on both macOS and Linux.
+
+Native rsync
+rsync -avt \
+  -e "ssh -i ~/pem/rodjohnson.pem" \
+  source.file \
+  ubuntu@server:/remote/path/
+rsyncbolt
+rsyncbolt -avt \
+  -e "ssh -i ~/pem/rodjohnson.pem" \
+  source.file \
+  ubuntu@server:/remote/path/
+
+No rsyncbolt-specific SSH syntax is required. The -e argument uses normal rsync-compatible semantics.
+
+You may also use an environment variable for the server address:
+
+export east=54.221.28.146
+
+rsyncbolt --progress -avt \
+  -e "ssh -i ~/pem/rodjohnson.pem" \
+  source.file \
+  ubuntu@$east:/remote/path/
+
+The syntax is identical on macOS and Linux.
