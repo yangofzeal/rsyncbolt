@@ -1,7 +1,6 @@
 # rsyncbolt
 
-30x speedup over standard rsync.
-
+Up to 178× faster exact incremental rsync-compatible updates in our loopback benchmark; 56× at 2 GiB and 178× at 4 GiB for a 64 KiB append.
 Move the change, not the file - exact sparse synchronization that can eliminate nearly all of the work of incremental file updates.
 
 Measured: 1,397.95× faster transfer path than rsync -a on Linux
