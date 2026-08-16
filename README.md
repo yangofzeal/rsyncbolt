@@ -262,7 +262,7 @@ The Free edition is limited to:
 Run:
 
 ```bash
-sh test.sh
+python test.py
 ```
 
 The Free benchmark demonstrates exact tracked sparse updates.
@@ -270,8 +270,16 @@ The Free benchmark demonstrates exact tracked sparse updates.
 A larger workload:
 
 ```bash
-sh test_large.sh
+python test_large.py
 ```
+
+## If you have an alternate temp directory to run the 2-4 GiB tests:
+
+```text
+$ export TMPDIR=/mnt/wsgi_1000/tmp
+```
+
+rsyncbolt will respect $TMPDIR during tests.
 
 is intentionally rejected and directs users to the Unlimited edition.
 
