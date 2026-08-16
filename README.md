@@ -170,21 +170,84 @@ raw_active_bytes=65536
 
 The result remains byte-for-byte exact.
 
-## Compatibility
+## Exact rsync Compatibility
 
-`rsyncbolt` has two paths:
+`rsyncbolt` is designed to preserve **rsync behavior exactly**, including
+cases that often break custom synchronization tools.
 
-**Fast path:** supported exact incremental file and directory-tree
-updates, including SSH remote synchronization through the appropriate
-`rsyncbolt_linux` or `rsyncbolt_mac` helper.
+For accelerated operations, rsyncbolt requires an exact destination result.
+For complex rsync semantics, it uses the native rsync compatibility path
+rather than approximating the behavior.
 
-**Compatibility path:** operations outside the safe accelerator are
-delegated to native `rsync`, preserving rsync behavior rather than
-approximating unsupported semantics.
+Run the compatibility torture test:
 
-The compatibility test suite covers cases such as symlinks, dangling
-symlinks, UTF-8 and unusual filenames, dotfiles, empty directories,
-permissions, mtimes, trailing-slash behavior, and `--delete`.
+```bash
+python test_rsyncbolt_compat_v2.py
+```
+
+The test creates a deliberately awkward filesystem containing:
+
+- regular files and deeply nested directories
+- UTF-8 names such as `café-雪-δ.txt`
+- spaces, quotes, wildcard-looking names, shell metacharacters, and a literal newline in a filename
+- dotfiles and hidden directories
+- empty directories
+- executable and permission bits
+- preserved mtimes
+- valid symlinks, directory symlinks, relative symlinks, and dangling symlinks
+- rsync trailing-slash semantics
+- `--delete`
+- replacement of a regular file by a symlink
+- rsync's normal behavior of leaving stale destination files when `--delete` is absent
+
+The test runs **native rsync and rsyncbolt separately**, then compares the
+resulting trees using `lstat`, file type, permissions, mtimes, symlink
+targets, file sizes, SHA-256 contents, and process return codes.
+
+Example:
+
+```text
+CASE ARCHIVE_SYMLINK_UTF8_WEIRD_NAMES
+NATIVE_COMMAND    rsync -a .../src/ .../native_archive/
+RSYNCBOLT_COMMAND ./rsyncbolt -a .../src/ .../bolt_archive/
+NATIVE_RC         0
+RSYNCBOLT_RC      0
+RETURN_CODE_MATCH YES
+TREE_MATCH        YES
+
+CASE TRAILING_SLASH_QUIRK
+NATIVE_COMMAND    rsync -a .../src .../native_no_slash/
+RSYNCBOLT_COMMAND ./rsyncbolt -a .../src .../bolt_no_slash/
+RETURN_CODE_MATCH YES
+TREE_MATCH        YES
+
+CASE DELETE_QUIRK
+NATIVE_COMMAND    rsync -a --delete .../src/ .../native_delete/
+RSYNCBOLT_COMMAND ./rsyncbolt -a --delete .../src/ .../bolt_delete/
+RETURN_CODE_MATCH YES
+TREE_MATCH        YES
+
+CASE FILE_TO_SYMLINK_REPLACEMENT
+RETURN_CODE_MATCH YES
+TREE_MATCH        YES
+
+CASE NO_DELETE_LEAVES_STALE_FILES
+RETURN_CODE_MATCH YES
+TREE_MATCH        YES
+
+RSYNC_COMPATIBILITY_RESULTS
+ARCHIVE_SYMLINK_UTF8_WEIRD_NAMES     YES
+TRAILING_SLASH_QUIRK                 YES
+DELETE_QUIRK                         YES
+FILE_TO_SYMLINK_REPLACEMENT          YES
+NO_DELETE_LEAVES_STALE_FILES         YES
+PASS                                 YES
+```
+
+This is intentional: rsyncbolt does not merely try to produce a
+"reasonable" copy. Its compatibility target is the **same observable result
+as rsync**, including rsync's less-obvious trailing-slash, deletion, symlink,
+and stale-file semantics.
 
 ## Free and Unlimited
 
