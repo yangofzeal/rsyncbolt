@@ -70,7 +70,7 @@ EXACT      YES
 PASS       YES
 
 RSYNCBOLT_REMOTE_EXACT
-remote_os=Linux sibling=rsyncbolt_linux bootstrapped=False
+bootstrapped=False
 files_changed=1 chunks_sent=1 raw_active_bytes=65536
 wire_payload_bytes=437
 PASS=True
@@ -97,7 +97,7 @@ SPEEDUP    28.32x
 EXACT      YES
 
 RSYNCBOLT_REMOTE_EXACT
-remote_os=Linux sibling=rsyncbolt_linux bootstrapped=False
+bootstrapped=False
 files_changed=1 chunks_sent=1 raw_active_bytes=65536
 wire_payload_bytes=437
 PASS=True
